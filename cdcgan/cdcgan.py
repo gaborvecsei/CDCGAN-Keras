@@ -1,8 +1,13 @@
 import math
 import os
 
+import cv2
+import matplotlib
+
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
+from keras import backend as K
 from keras import models, layers, optimizers, utils
 from keras.datasets import mnist
 from keras.layers import Dense, Input
@@ -12,6 +17,7 @@ from keras.layers.convolutional import UpSampling2D
 from keras.layers.core import Activation
 from keras.layers.core import Flatten
 from keras.layers.normalization import BatchNormalization
+from swiss_army_tensorboard import tfboard_loggers
 from tqdm import tqdm
 
 ACTIVATION = "tanh"
@@ -105,7 +111,7 @@ def generate_images(gen, nb_images: int, label: int):
     return generated_images
 
 
-def generate_mnist_image_grid(gen):
+def generate_mnist_image_grid(gen, title: str = "Generated images"):
     generated_images = []
 
     for i in range(10):
@@ -117,21 +123,43 @@ def generate_mnist_image_grid(gen):
 
     generated_images = np.array(generated_images)
     image_grid = combine_images(generated_images)
-    return image_grid
+    image_grid = inverse_transform_images(image_grid)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    ax.axis("off")
+    ax.imshow(image_grid, cmap="gray")
+    ax.set_title(title)
+    fig.canvas.draw()
+
+    image = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+    image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+
+    return image
 
 
 def save_generated_image(image, epoch, iteration, folder_path):
     if not os.path.isdir(folder_path):
         os.makedirs(folder_path)
 
-    image = image * 127.5 + 127.5
     file_path = "{0}/{1}_{2}.png".format(folder_path, epoch, iteration)
-    Image.fromarray(image.astype(np.uint8)).save(file_path)
+    cv2.imwrite(file_path, image.astype(np.uint8))
+
+
+def transform_images(images: np.ndarray):
+    images = (images.astype(np.float32) - 127.5) / 127.5
+    return images
+
+
+def inverse_transform_images(images: np.ndarray):
+    images = images * 127.5 + 127.5
+    images = images.astype(np.uint8)
+    return images
 
 
 def train(batch_size):
     (X_train, y_train), (_, _) = mnist.load_data()
-    X_train = (X_train.astype(np.float32) - 127.5) / 127.5
+    X_train = transform_images(X_train)
     X_train = X_train[:, :, :, None]
 
     y_train = utils.to_categorical(y_train, 100)
@@ -155,14 +183,22 @@ def train(batch_size):
     D.trainable = True
     D.compile(loss='binary_crossentropy', optimizer=optimizer)
 
-    for epoch in range(100):
-        nb_of_iterations = int(X_train.shape[0] / batch_size)
+    # Setup Tensorboard loggers
+    tfboard_loggers.TFBoardModelGraphLogger.log_graph("../models/logs", K.get_session())
+    loss_logger = tfboard_loggers.TFBoardScalarLogger("../models/logs/loss")
+    image_logger = tfboard_loggers.TFBoardImageLogger("../models/logs/generated_images")
 
+    iteration = 0
+
+    nb_of_iterations_per_epoch = int(X_train.shape[0] / batch_size)
+    print("Number of iterations per epoch: {0}".format(nb_of_iterations_per_epoch))
+
+    for epoch in range(100):
         pbar = tqdm(desc="Epoch: {0}".format(epoch), total=X_train.shape[0])
         g_losses = []
         d_losses = []
 
-        for i in range(nb_of_iterations):
+        for i in range(nb_of_iterations_per_epoch):
             noise = np.random.uniform(0, 1, size=(batch_size, 100))
 
             image_batch = X_train[i * batch_size:(i + 1) * batch_size]
@@ -171,27 +207,37 @@ def train(batch_size):
             generated_images = G.predict([noise, label_batch], verbose=0)
 
             if i % 20 == 0:
-                combined_image = combine_images(generated_images)
-                save_generated_image(combined_image, epoch, i, "../images/train_generated_images")
-
-            if i % 20 == 0:
-                image_grid = generate_mnist_image_grid(G)
-                save_generated_image(image_grid, epoch, i, "../images/generated_mnist_images")
+                image_grid = generate_mnist_image_grid(G, title="Epoch {0}, iteration {1}".format(epoch, iteration))
+                save_generated_image(image_grid, epoch, i, "../images/generated_mnist_images_per_iteration")
+                image_logger.log_images("generated_mnist_images_per_iteration", [image_grid], iteration)
 
             X = np.concatenate((image_batch, generated_images))
             y = [1] * batch_size + [0] * batch_size
             label_batches_for_discriminator = np.concatenate((label_batch, label_batch))
-            d_loss = D.train_on_batch([X, label_batches_for_discriminator], y)
-            d_losses.append(d_loss)
+            D_loss = D.train_on_batch([X, label_batches_for_discriminator], y)
+            d_losses.append(D_loss)
+            loss_logger.log_scalar("discriminator_loss", D_loss, iteration)
             noise = np.random.uniform(0, 1, (batch_size, 100))
             D.trainable = False
-            g_loss = GD.train_on_batch([noise, label_batch], [1] * batch_size)
+            G_loss = GD.train_on_batch([noise, label_batch], [1] * batch_size)
             D.trainable = True
-            g_losses.append(g_loss)
+            g_losses.append(G_loss)
+            loss_logger.log_scalar("generator_loss", G_loss, iteration)
+
             pbar.update(batch_size)
 
+            iteration += 1
+
+        # Save a generated image for every epoch
+        image_grid = generate_mnist_image_grid(G, title="Epoch {0}".format(epoch))
+        save_generated_image(image_grid, epoch, 0, "../images/generated_mnist_images_per_epoch")
+        image_logger.log_images("generated_mnist_images_per_epoch", [image_grid], epoch)
+
         pbar.close()
-        print("\nD loss: {0}, G loss: {1}".format(np.mean(d_losses), np.mean(g_losses)))
+        print("D loss: {0}, G loss: {1}".format(np.mean(d_losses), np.mean(g_losses)))
+
+        G.save_weights("../models/weights/generator.h5")
+        D.save_weights("../models/weights/discriminator.h5")
 
 
 if __name__ == "__main__":
