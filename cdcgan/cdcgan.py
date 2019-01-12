@@ -9,71 +9,64 @@ import matplotlib.pyplot as plt
 import numpy as np
 from keras import backend as K
 from keras import models, layers, optimizers, utils
-from keras.datasets import mnist
-from keras.layers import Dense, Input
-from keras.layers import Reshape
-from keras.layers.convolutional import Conv2D, MaxPooling2D
-from keras.layers.convolutional import UpSampling2D
-from keras.layers.core import Activation
-from keras.layers.core import Flatten
-from keras.layers.normalization import BatchNormalization
+from keras import datasets
 from swiss_army_tensorboard import tfboard_loggers
 from tqdm import tqdm
 
-ACTIVATION = "tanh"
+ACTIVATION = layers.Activation("tanh")
 
 
 def generator_model():
-    input_z = Input((100,))
-    x = Dense(1024)(input_z)
-    x = layers.Activation(ACTIVATION)(x)
-    x = Dense(128 * 7 * 7)(x)
-    x = BatchNormalization()(x)
-    r_z = Reshape((7, 7, 128), input_shape=(128 * 7 * 7,))(x)
+    input_z = layers.Input((100,))
+    dense_z_1 = layers.Dense(1024)(input_z)
+    act_z_1 = ACTIVATION(dense_z_1)
+    dense_z_2 = layers.Dense(128 * 7 * 7)(act_z_1)
+    bn_z_1 = layers.BatchNormalization()(dense_z_2)
+    reshape_z = layers.Reshape((7, 7, 128), input_shape=(128 * 7 * 7,))(bn_z_1)
 
     input_c = layers.Input((100,))
-    x = Dense(1024)(input_c)
-    x = layers.Activation(ACTIVATION)(x)
-    x = Dense(128 * 7 * 7)(x)
-    x = BatchNormalization()(x)
-    r_c = Reshape((7, 7, 128), input_shape=(128 * 7 * 7,))(x)
+    dense_c_1 = layers.Dense(1024)(input_c)
+    act_c_1 = ACTIVATION(dense_c_1)
+    dense_c_2 = layers.Dense(128 * 7 * 7)(act_c_1)
+    bn_c_1 = layers.BatchNormalization()(dense_c_2)
+    reshape_c = layers.Reshape((7, 7, 128), input_shape=(128 * 7 * 7,))(bn_c_1)
 
-    concat_z_c = layers.Concatenate()([r_z, r_c])
+    concat_z_c = layers.Concatenate()([reshape_z, reshape_c])
 
-    x = UpSampling2D(size=(2, 2))(concat_z_c)
-    x = Conv2D(64, (5, 5), padding='same')(x)
-    x = layers.Activation(ACTIVATION)(x)
-    x = UpSampling2D(size=(2, 2))(x)
-    x = Conv2D(1, (5, 5), padding='same')(x)
-    x = layers.Activation(ACTIVATION)(x)
-    model = models.Model(inputs=[input_z, input_c], outputs=x)
+    up_1 = layers.UpSampling2D(size=(2, 2))(concat_z_c)
+    conv_1 = layers.Conv2D(64, (5, 5), padding='same')(up_1)
+    act_1 = ACTIVATION(conv_1)
+    up_2 = layers.UpSampling2D(size=(2, 2))(act_1)
+    conv_2 = layers.Conv2D(1, (5, 5), padding='same')(up_2)
+    act_2 = layers.Activation("tanh")(conv_2)
+    model = models.Model(inputs=[input_z, input_c], outputs=act_2)
     return model
 
 
 def discriminator_model():
-    input_gen_image = Input((28, 28, 1))
-    conv_1_image = Conv2D(64, (5, 5), padding='same')(input_gen_image)
-    act_1_image = layers.Activation(ACTIVATION)(conv_1_image)
-    pool_1_image = MaxPooling2D(pool_size=(2, 2))(act_1_image)
-    conv_2_image = Conv2D(128, (5, 5))(pool_1_image)
-    act_2_image = layers.Activation(ACTIVATION)(conv_2_image)
-    pool_2_image = MaxPooling2D(pool_size=(2, 2))(act_2_image)
+    input_gen_image = layers.Input((28, 28, 1))
+    conv_1_image = layers.Conv2D(64, (5, 5), padding='same')(input_gen_image)
+    act_1_image = ACTIVATION(conv_1_image)
+    pool_1_image = layers.MaxPooling2D(pool_size=(2, 2))(act_1_image)
+    conv_2_image = layers.Conv2D(128, (5, 5))(pool_1_image)
+    act_2_image = ACTIVATION(conv_2_image)
+    pool_2_image = layers.MaxPooling2D(pool_size=(2, 2))(act_2_image)
 
     input_c = layers.Input((100,))
-    dense_1_c = Dense(1024)(input_c)
-    act_1_c = layers.Activation(ACTIVATION)(dense_1_c)
-    dense_2_c = Dense(5 * 5 * 1)(act_1_c)
-    bn_c = BatchNormalization()(dense_2_c)
-    reshaped_c = Reshape((5, 5, 1))(bn_c)
+    dense_1_c = layers.Dense(1024)(input_c)
+    act_1_c = ACTIVATION(dense_1_c)
+    dense_2_c = layers.Dense(5 * 5 * 1)(act_1_c)
+    bn_c = layers.BatchNormalization()(dense_2_c)
+    reshaped_c = layers.Reshape((5, 5, 1))(bn_c)
 
     concat = layers.Concatenate()([pool_2_image, reshaped_c])
 
-    x = Flatten()(concat)
-    x = Dense(1024)(x)
-    x = layers.Activation(ACTIVATION)(x)
-    x = Dense(1)(x)
-    x = Activation('sigmoid')(x)
-    model = models.Model(inputs=[input_gen_image, input_c], outputs=x)
+    flat = layers.Flatten()(concat)
+    dense_1 = layers.Dense(1024)(flat)
+    act_1 = ACTIVATION(dense_1)
+    dense_2 = layers.Dense(1)(act_1)
+    act_2 = layers.Activation('sigmoid')(dense_2)
+    model = models.Model(inputs=[input_gen_image, input_c], outputs=act_2)
     return model
 
 
@@ -84,27 +77,30 @@ def generator_containing_discriminator(g, d):
     d.trainable = False
     is_real = d([gen_image, input_c])
     model = models.Model(inputs=[input_z, input_c], outputs=is_real)
-
     return model
 
 
 def combine_images(generated_images):
-    num = generated_images.shape[0]
-    width = int(math.sqrt(num))
-    height = int(math.ceil(float(num) / width))
-    shape = generated_images.shape[1:3]
-    image = np.zeros((height * shape[0], width * shape[1]),
-                     dtype=generated_images.dtype)
+    num_images = generated_images.shape[0]
+    new_width = int(math.sqrt(num_images))
+    new_height = int(math.ceil(float(num_images) / new_width))
+    grid_shape = generated_images.shape[1:3]
+    grid_image = np.zeros((new_height * grid_shape[0], new_width * grid_shape[1]), dtype=generated_images.dtype)
     for index, img in enumerate(generated_images):
-        i = int(index / width)
-        j = index % width
-        image[i * shape[0]:(i + 1) * shape[0], j * shape[1]:(j + 1) * shape[1]] = \
+        i = int(index / new_width)
+        j = index % new_width
+        grid_image[i * grid_shape[0]:(i + 1) * grid_shape[0], j * grid_shape[1]:(j + 1) * grid_shape[1]] = \
             img[:, :, 0]
-    return image
+    return grid_image
+
+
+def generate_noise(shape: tuple):
+    noise = np.random.uniform(0, 1, size=shape)
+    return noise
 
 
 def generate_images(gen, nb_images: int, label: int):
-    noise = np.random.uniform(0, 1, size=(nb_images, 100))
+    noise = generate_noise((nb_images, 100))
     label_batch = np.zeros((nb_images, 100))
     label_batch[:, label] = 1
     generated_images = gen.predict([noise, label_batch], verbose=0)
@@ -115,7 +111,7 @@ def generate_mnist_image_grid(gen, title: str = "Generated images"):
     generated_images = []
 
     for i in range(10):
-        noise = np.random.uniform(0, 1, size=(10, 100))
+        noise = generate_noise((10, 100))
         label_input = np.zeros((10, 100))
         label_input[:, i] = 1
         gen_images = gen.predict([noise, label_input], verbose=0)
@@ -158,7 +154,7 @@ def inverse_transform_images(images: np.ndarray):
 
 
 def train(batch_size):
-    (X_train, y_train), (_, _) = mnist.load_data()
+    (X_train, y_train), (_, _) = datasets.mnist.load_data()
     X_train = transform_images(X_train)
     X_train = X_train[:, :, :, None]
 
@@ -199,7 +195,7 @@ def train(batch_size):
         d_losses = []
 
         for i in range(nb_of_iterations_per_epoch):
-            noise = np.random.uniform(0, 1, size=(batch_size, 100))
+            noise = generate_noise((batch_size, 100))
 
             image_batch = X_train[i * batch_size:(i + 1) * batch_size]
             label_batch = y_train[i * batch_size:(i + 1) * batch_size]
@@ -217,7 +213,7 @@ def train(batch_size):
             D_loss = D.train_on_batch([X, label_batches_for_discriminator], y)
             d_losses.append(D_loss)
             loss_logger.log_scalar("discriminator_loss", D_loss, iteration)
-            noise = np.random.uniform(0, 1, (batch_size, 100))
+            noise = generate_noise((batch_size, 100))
             D.trainable = False
             G_loss = GD.train_on_batch([noise, label_batch], [1] * batch_size)
             D.trainable = True
