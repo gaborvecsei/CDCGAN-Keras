@@ -5,3 +5,5 @@ images/
 *.h5
 events.out.tfevents*
 *.zip
+.ipynb_checkpoints/
+*.mp4

@@ -1,6 +1,8 @@
 # Conditional Deep Convolutional GAN (CDCGAN) - Keras Implementation
 
-<img src="art/mnist_generated_per_epoch.gif" width="640" alt="Generated MNIST Characters"><br/>
+<img src="art/mnist_generated_per_epoch.gif" width="500" alt="Generated MNIST Characters"><br/>
+
+<img src="art/interpolation.gif" width="400" alt="Interpolation animation"><br/>
 
 ## Model
 
@@ -20,7 +22,7 @@ loss and the model graph
 Gábor Vecsei
 
 - [Website](https://gaborvecsei.com)
-- [Personal Blog](https://gaborvecsei.wordpress.com/)
 - [LinkedIn](https://www.linkedin.com/in/gaborvecsei)
 - [Twitter](https://twitter.com/GAwesomeBE)
+- [Personal Blog](https://gaborvecsei.wordpress.com/)
 - [Github](https://github.com/gaborvecsei)
