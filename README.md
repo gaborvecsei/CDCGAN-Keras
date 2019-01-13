@@ -1,10 +1,19 @@
 # Conditional Deep Convolutional GAN (CDCGAN) - Keras Implementation
 
-<img src="art/mnist_generated_per_epoch.gif" width="500" alt="Generated MNIST Characters"><br/>
+Generated digits at every epoch:
 
-<img src="art/interpolation.gif" width="400" alt="Interpolation animation"><br/>
+<img src="art/mnist_generated_per_epoch.gif" width="640" alt="Generated MNIST Characters">
+
+Linear interpolation results:
+
+<img src="art/interpolation_2_to_4.gif" width="300" alt="Interpolation animation">
+<img src="art/interpolation_8_to_5.gif" width="300" alt="Interpolation animation">
+<img src="art/interpolation_9_to_6.gif" width="300" alt="Interpolation animation">
+
 
 ## Model
+
+This is the abstract representation of the model just to get a "bird eye view" for better understanding.
 
 <img src="art/cdcgan_abstract_model.png" width="640" alt="Model"><br/>
 
