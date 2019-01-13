@@ -4,3 +4,4 @@ test.py
 images/
 *.h5
 events.out.tfevents*
+*.zip

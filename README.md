@@ -1,14 +1,19 @@
 # Conditional Deep Convolutional GAN (CDCGAN) - Keras Implementation
 
-<p align="center">
-<img src="art/mnist_generated_per_epoch.gif" width="400" alt="Generated MNIST Characters"><br/>
-</p>
+<img src="art/mnist_generated_per_epoch.gif" width="640" alt="Generated MNIST Characters"><br/>
 
 ## Model
 
-<p align="center">
 <img src="art/cdcgan_abstract_model.png" width="640" alt="Model"><br/>
-</p>
+
+## Training
+
+Just run the script `cdcgan/cdcgan_train.py`
+
+## Weights & Tensorboard logs
+
+Check the releases, for the latest models weights, and tensorboard logs, where you can see the generated images
+loss and the model graph
 
 ## About
 
