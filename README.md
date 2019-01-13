@@ -6,9 +6,7 @@ Generated digits at every epoch:
 
 Linear interpolation results:
 
-<img src="art/interpolation_2_to_4.gif" width="300" alt="Interpolation animation">
-<img src="art/interpolation_8_to_5.gif" width="300" alt="Interpolation animation">
-<img src="art/interpolation_9_to_6.gif" width="300" alt="Interpolation animation">
+<img src="art/interpolation_2_to_4.gif" width="250" alt="Interpolation animation"><img src="art/interpolation_8_to_5.gif" width="250" alt="Interpolation animation"><img src="art/interpolation_9_to_6.gif" width="250" alt="Interpolation animation">
 
 
 ## Model
