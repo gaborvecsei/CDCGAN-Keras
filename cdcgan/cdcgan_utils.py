@@ -28,10 +28,15 @@ def generate_noise(shape: tuple):
     return noise
 
 
+def generate_condition_embedding(label: int, nb_of_label_embeddings: int):
+    label_embeddings = np.zeros((nb_of_label_embeddings, 100))
+    label_embeddings[:, label] = 1
+    return label_embeddings
+
+
 def generate_images(generator, nb_images: int, label: int):
     noise = generate_noise((nb_images, 100))
-    label_batch = np.zeros((nb_images, 100))
-    label_batch[:, label] = 1
+    label_batch = generate_condition_embedding(label, nb_images)
     generated_images = generator.predict([noise, label_batch], verbose=0)
     return generated_images
 
@@ -41,8 +46,7 @@ def generate_mnist_image_grid(generator, title: str = "Generated images"):
 
     for i in range(10):
         noise = generate_noise((10, 100))
-        label_input = np.zeros((10, 100))
-        label_input[:, i] = 1
+        label_input = generate_condition_embedding(i, 10)
         gen_images = generator.predict([noise, label_input], verbose=0)
         generated_images.extend(gen_images)
 
