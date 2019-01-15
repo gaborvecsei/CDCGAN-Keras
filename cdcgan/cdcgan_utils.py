@@ -42,7 +42,7 @@ def generate_images(generator, nb_images: int, label: int):
     return generated_images
 
 
-def generate_mnist_image_grid(generator, title: str = "Generated images"):
+def generate_image_grid(generator, title: str = "Generated images", cmap: str = None):
     generated_images = []
 
     for i in range(10):
@@ -58,7 +58,7 @@ def generate_mnist_image_grid(generator, title: str = "Generated images"):
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     ax.axis("off")
-    ax.imshow(image_grid, cmap="gray")
+    ax.imshow(image_grid, cmap=cmap)
     ax.set_title(title)
     fig.canvas.draw()
 
@@ -99,11 +99,13 @@ def inverse_transform_images(images: np.ndarray):
 
 def convert_video_to_gif(input_video_path, output_gif_path, fps=24):
     palette_image_path = "palette.png"
-    command_palette = 'ffmpeg -y -t 0 -i {0} -vf fps={1},scale=320:-1:flags=lanczos,palettegen {2}'.format(input_video_path,
-                                                                                                           fps,
-                                                                                                           palette_image_path)
-    command_convert = 'ffmpeg -y -t 0 -i {0} -i {1} -filter_complex "fps={2},scale=320:-1:flags=lanczos[x];[x][1:v]paletteuse" {3}'.format(input_video_path,palette_image_path, fps, output_gif_path)
-    
+    command_palette = 'ffmpeg -y -t 0 -i {0} -vf fps={1},scale=320:-1:flags=lanczos,palettegen {2}'.format(
+        input_video_path,
+        fps,
+        palette_image_path)
+    command_convert = 'ffmpeg -y -t 0 -i {0} -i {1} -filter_complex "fps={2},scale=320:-1:flags=lanczos[x];[x][1:v]paletteuse" {3}'.format(
+        input_video_path, palette_image_path, fps, output_gif_path)
+
     try:
         subprocess.check_call(command_palette)
         subprocess.check_call(command_convert)

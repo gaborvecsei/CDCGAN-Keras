@@ -70,9 +70,9 @@ for epoch in range(EPOCHS):
         generated_images = G.predict([noise, label_batch], verbose=0)
 
         if i % 20 == 0:
-            image_grid = cdcgan_utils.generate_mnist_image_grid(G,
-                                                                title="Epoch {0}, iteration {1}".format(epoch,
-                                                                                                        iteration))
+            image_grid = cdcgan_utils.generate_image_grid(G,
+                                                          title="Epoch {0}, iteration {1}".format(epoch,
+                                                                                                  iteration))
             cdcgan_utils.save_generated_image(image_grid, epoch, i, "../images/generated_mnist_images_per_iteration")
             image_logger.log_images("generated_mnist_images_per_iteration", [image_grid], iteration)
 
@@ -96,7 +96,7 @@ for epoch in range(EPOCHS):
         iteration += 1
 
     # Save a generated image for every epoch
-    image_grid = cdcgan_utils.generate_mnist_image_grid(G, title="Epoch {0}".format(epoch))
+    image_grid = cdcgan_utils.generate_image_grid(G, title="Epoch {0}".format(epoch))
     cdcgan_utils.save_generated_image(image_grid, epoch, 0, "../images/generated_mnist_images_per_epoch")
     image_logger.log_images("generated_mnist_images_per_epoch", [image_grid], epoch)
 
