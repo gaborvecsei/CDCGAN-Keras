@@ -8,7 +8,8 @@ from keras import optimizers
 from keras import datasets
 from swiss_army_tensorboard import tfboard_loggers
 from tqdm import tqdm
-from cdcgan import cdcgan_models, cdcgan_utils
+from cdcgan import cdcgan_utils
+from cdcgan.mnist_cdcgan import cdcgan_models
 
 BATCH_SIZE = 128
 EPOCHS = 100
@@ -21,7 +22,7 @@ X_train = X_train[:, :, :, None]
 
 y_train = keras_utils.to_categorical(y_train, 100)
 
-# Create the models
+# Create the model_results
 
 print("Generator:")
 G = cdcgan_models.generator_model()
@@ -44,9 +45,9 @@ D.compile(loss='binary_crossentropy', optimizer=optimizer)
 
 # Setup Tensorboard loggers
 
-tfboard_loggers.TFBoardModelGraphLogger.log_graph("../models/logs", K.get_session())
-loss_logger = tfboard_loggers.TFBoardScalarLogger("../models/logs/loss")
-image_logger = tfboard_loggers.TFBoardImageLogger("../models/logs/generated_images")
+tfboard_loggers.TFBoardModelGraphLogger.log_graph("model_results/logs", K.get_session())
+loss_logger = tfboard_loggers.TFBoardScalarLogger("model_results/logs/loss")
+image_logger = tfboard_loggers.TFBoardImageLogger("model_results/logs/generated_images")
 
 # Model Training
 
@@ -73,7 +74,7 @@ for epoch in range(EPOCHS):
             image_grid = cdcgan_utils.generate_image_grid(G,
                                                           title="Epoch {0}, iteration {1}".format(epoch,
                                                                                                   iteration))
-            cdcgan_utils.save_generated_image(image_grid, epoch, i, "../images/generated_mnist_images_per_iteration")
+            cdcgan_utils.save_generated_image(image_grid, epoch, i, "model_results/images/generated_mnist_images_per_iteration")
             image_logger.log_images("generated_mnist_images_per_iteration", [image_grid], iteration)
 
         X = np.concatenate((image_batch, generated_images))
@@ -97,11 +98,11 @@ for epoch in range(EPOCHS):
 
     # Save a generated image for every epoch
     image_grid = cdcgan_utils.generate_image_grid(G, title="Epoch {0}".format(epoch))
-    cdcgan_utils.save_generated_image(image_grid, epoch, 0, "../images/generated_mnist_images_per_epoch")
+    cdcgan_utils.save_generated_image(image_grid, epoch, 0, "model_results/images/generated_mnist_images_per_epoch")
     image_logger.log_images("generated_mnist_images_per_epoch", [image_grid], epoch)
 
     pbar.close()
     print("D loss: {0}, G loss: {1}".format(np.mean(d_losses_for_epoch), np.mean(g_losses_for_epoch)))
 
-    G.save_weights("../models/weights/generator.h5")
-    D.save_weights("../models/weights/discriminator.h5")
+    G.save_weights("model_results/weights/generator.h5")
+    D.save_weights("model_results/weights/discriminator.h5")
