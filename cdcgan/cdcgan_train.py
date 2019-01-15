@@ -62,7 +62,7 @@ for epoch in range(EPOCHS):
     d_losses_for_epoch = []
 
     for i in range(nb_of_iterations_per_epoch):
-        noise = cdcgan_utils.generate_noise((BATCH_SIZE, 100))
+        noise = cdcgan_utils.generate_noise(BATCH_SIZE)
 
         image_batch = X_train[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]
         label_batch = y_train[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]
@@ -84,7 +84,7 @@ for epoch in range(EPOCHS):
         d_losses_for_epoch.append(D_loss)
         loss_logger.log_scalar("discriminator_loss", D_loss, iteration)
 
-        noise = cdcgan_utils.generate_noise((BATCH_SIZE, 100))
+        noise = cdcgan_utils.generate_noise(BATCH_SIZE)
         D.trainable = False
         G_loss = GD.train_on_batch([noise, label_batch], [1] * BATCH_SIZE)
         D.trainable = True

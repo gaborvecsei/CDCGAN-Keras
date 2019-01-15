@@ -24,8 +24,8 @@ def combine_images(generated_images):
     return grid_image
 
 
-def generate_noise(shape: tuple):
-    noise = np.random.uniform(0, 1, size=shape)
+def generate_noise(nb_of_rows: int):
+    noise = np.random.uniform(0, 1, size=(nb_of_rows, 100))
     return noise
 
 
@@ -36,7 +36,7 @@ def generate_condition_embedding(label: int, nb_of_label_embeddings: int):
 
 
 def generate_images(generator, nb_images: int, label: int):
-    noise = generate_noise((nb_images, 100))
+    noise = generate_noise(nb_images)
     label_batch = generate_condition_embedding(label, nb_images)
     generated_images = generator.predict([noise, label_batch], verbose=0)
     return generated_images
@@ -46,7 +46,7 @@ def generate_image_grid(generator, title: str = "Generated images", cmap: str = 
     generated_images = []
 
     for i in range(10):
-        noise = generate_noise((10, 100))
+        noise = generate_noise(10)
         label_input = generate_condition_embedding(i, 10)
         gen_images = generator.predict([noise, label_input], verbose=0)
         generated_images.extend(gen_images)
