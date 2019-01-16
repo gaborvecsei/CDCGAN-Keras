@@ -9,16 +9,15 @@ from keras import datasets
 from swiss_army_tensorboard import tfboard_loggers
 from tqdm import tqdm
 from cdcgan import cdcgan_utils
-from cdcgan.mnist_cdcgan import cdcgan_models
+from cdcgan.cifar_cdcgan import cdcgan_models
 
 BATCH_SIZE = 128
 EPOCHS = 100
 
 # Load & Prepare MNIST
 
-(X_train, y_train), (_, _) = datasets.mnist.load_data()
+(X_train, y_train), (_, _) = datasets.cifar10.load_data()
 X_train = cdcgan_utils.transform_images(X_train)
-X_train = X_train[:, :, :, None]
 
 y_train = keras_utils.to_categorical(y_train, 100)
 
