@@ -14,7 +14,7 @@ from cdcgan.cifar_cdcgan import cdcgan_models
 BATCH_SIZE = 128
 EPOCHS = 100
 
-# Load & Prepare MNIST
+# Load & Prepare CIFAR
 
 (X_train, y_train), (_, _) = datasets.cifar10.load_data()
 X_train = cdcgan_utils.transform_images(X_train)
